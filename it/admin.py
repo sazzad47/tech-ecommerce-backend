@@ -8,6 +8,7 @@ from django.contrib.postgres import fields
 from django_json_widget.widgets import JSONEditorWidget
 from django import forms
 from django_admin_json_editor import JSONEditorWidget
+from django.contrib.auth.models import Group
 
 class OrderAdminForm(forms.ModelForm):
     demo = forms.JSONField(
@@ -95,3 +96,4 @@ class TransactionAdmin(admin.ModelAdmin):
 
     get_order.short_description = 'Order'
 
+admin.site.unregister(Group)

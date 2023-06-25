@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'django_admin_json_editor',
     'it',
     'ce',
+    'gd',
+    'django.contrib.sites',
+    
 ]
 
 
