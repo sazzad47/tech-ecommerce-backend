@@ -18,6 +18,8 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SITE_ID=1
+
 BASE_URL = 'http://127.0.0.1:8000'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -49,7 +51,9 @@ INSTALLED_APPS = [
     'ce',
     'gd',
     'django.contrib.sites',
-    
+    'djmoney',
+    'djmoney.contrib.exchange',
+
 ]
 
 
@@ -220,3 +224,5 @@ MEDIA_URL = '/media/'
 # Set your Stripe API keys
 stripe.api_key = 'sk_test_51LrTfeJMUXLRq6IylpiimFXxuzAo7dn7ubQvTWvuTXY4Ukydi8oJEVjALdsytV3dF7afZ1tUREbcPaUQJBoSEwut00cFnGtmxC'
 STRIPE_WEBHOOK_SECRET = 'whsec_7c1e3d191e2169509229851d3e097ca74bf4246304e2d713b026e5c62ab5bffb'
+
+OPEN_EXCHANGE_RATES_APP_ID= '7e6f370ac665440dafb0c87273baabc1'

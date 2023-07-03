@@ -1,6 +1,13 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Sum
+from users.models import User
+from djmoney.models.fields import MoneyField
+from djmoney.contrib.exchange.models import convert_money
+from djmoney.money import Money
+from decimal import Decimal
+
 
 class Post(models.Model):
     STATUS_CHOICES = (
@@ -11,7 +18,28 @@ class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     tips = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Tip', related_name='post_tips')
     raised = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Donation', related_name='post_donations')
-    fixed_tip = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    comments = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Comment', related_name='post_comments')
+    total_donations = MoneyField(
+        decimal_places=2,
+        max_digits=20,
+        default=0,
+        default_currency='USD',
+        null= True
+    )
+    total_tips = MoneyField(
+        decimal_places=2,
+        max_digits=20,
+        default=0,
+        default_currency='USD',
+        null= True
+    )
+    fixed_tip = MoneyField(
+        decimal_places=2,
+        max_digits=20,
+        default=0,
+        default_currency='USD',
+        null= True
+    )
     application_for = models.CharField(max_length=255, null=True, blank=True)
     mode = models.CharField(max_length=255, null=True, blank=True)
     category = models.CharField(max_length=255, null=True, blank=True)
@@ -49,22 +77,64 @@ class Post(models.Model):
     donation_needed = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='pending')
+    suggested_donations = models.JSONField(blank=True, null=True)
+    suggested_tips = models.JSONField(blank=True, null=True)
 
 class Tip(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = MoneyField(
+        decimal_places=2,
+        default=0,
+        default_currency='USD',
+        max_digits=11,
+    )
+    is_hidden = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # Convert the amount to USD
+        amount_usd = convert_money(Money(self.amount.amount, self.amount.currency), 'USD')
+        print(amount_usd.amount)
+        # Update total_tips for the post
+        post = self.post
+        previous_total_tips = post.total_tips or 0  # Get the previous total_tips or default to 0
+        post.total_tips = previous_total_tips.amount + amount_usd.amount
+        post.save()
+      
 
 class Donation(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = MoneyField(
+        decimal_places=2,
+        default=0,
+        default_currency='USD',
+        max_digits=11,
+    )
+    is_hidden = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # Convert the amount to USD
+        amount_usd = convert_money(Money(self.amount.amount, self.amount.currency), 'USD')
+        print(amount_usd.amount)
+        # Update total_donations for the post
+        post = self.post
+        previous_total_donations = post.total_donations or 0  # Get the previous total_donations or default to 0
+        post.total_donations = previous_total_donations.amount + amount_usd.amount
+        post.save()
+
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_hidden = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Comment by {self.user.username} on post {self.post.application_for}"
+        return f"Comment by {self.user.first_name} on post {self.post.application_for}"
+

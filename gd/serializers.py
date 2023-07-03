@@ -2,18 +2,29 @@ from rest_framework import serializers
 from .models import Post, Tip, Donation, Comment
 
 class TipSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
     class Meta:
         model = Tip
-        fields = '__all__'
+        fields = ('user', 'amount', 'is_hidden')
 
-class DonationSerializer(serializers.ModelSerializer):
+class DonorSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
     class Meta:
         model = Donation
-        fields = '__all__'
+        fields = ('user', 'amount', 'is_hidden')
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = Comment
+        fields = ('user', 'content', 'created_at', 'is_hidden')
 
 class PostSerializer(serializers.ModelSerializer):
     tips = TipSerializer(many=True, read_only=True)
-    raised = DonationSerializer(many=True, read_only=True)
+    raised = DonorSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
