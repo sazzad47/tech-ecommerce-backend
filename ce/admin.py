@@ -4,7 +4,6 @@ from django.conf import settings
 from .models import Order
 from utils import Util
 from .models import Transaction
-from django.contrib.postgres import fields
 from django_json_widget.widgets import JSONEditorWidget
 from django import forms
 from django_admin_json_editor import JSONEditorWidget

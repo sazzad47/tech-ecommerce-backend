@@ -1,12 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Sum
 from users.models import User
 from djmoney.models.fields import MoneyField
 from djmoney.contrib.exchange.models import convert_money
 from djmoney.money import Money
-from decimal import Decimal
 
 
 class Post(models.Model):
@@ -27,13 +25,6 @@ class Post(models.Model):
         null= True
     )
     total_tips = MoneyField(
-        decimal_places=2,
-        max_digits=20,
-        default=0,
-        default_currency='USD',
-        null= True
-    )
-    fixed_tip = MoneyField(
         decimal_places=2,
         max_digits=20,
         default=0,
@@ -102,7 +93,18 @@ class Tip(models.Model):
         previous_total_tips = post.total_tips or 0  # Get the previous total_tips or default to 0
         post.total_tips = previous_total_tips.amount + amount_usd.amount
         post.save()
-      
+        
+    @property
+    def first_name(self):
+        return self.user.first_name
+
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def avatar(self):
+        return self.user.avatar
 
 class Donation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -127,7 +129,18 @@ class Donation(models.Model):
         post.total_donations = previous_total_donations.amount + amount_usd.amount
         post.save()
 
+    @property
+    def first_name(self):
+        return self.user.first_name
 
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def avatar(self):
+        return self.user.avatar
+    
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
@@ -135,6 +148,14 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_hidden = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Comment by {self.user.first_name} on post {self.post.application_for}"
+    @property
+    def first_name(self):
+        return self.user.first_name
 
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def avatar(self):
+        return self.user.avatar

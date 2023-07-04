@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 import stripe
 import json
 from rest_framework.permissions import IsAuthenticated
-from utils import Util
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -53,18 +52,6 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return queryset.filter(status='Approved')
     
-
-class TipViewSet(viewsets.ModelViewSet):
-    queryset = Tip.objects.all()
-    serializer_class = TipSerializer
-
-class DonationViewSet(viewsets.ModelViewSet):
-    queryset = Donation.objects.all()
-    serializer_class = DonorSerializer
-
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
 
 def get_post_countries_view(request):
     post_countries = get_post_countries()
@@ -199,7 +186,7 @@ class PostDetailsAPIView(APIView):
         comment_serializer = CommentSerializer(comments, many=True)
 
         # Get top 10 donors for the post
-        top_donors = Donation.objects.filter(post=post, is_hidden=False).order_by('-amount')[:10]
+        top_donors = Donation.objects.filter(post=post, is_hidden=False).order_by('-amount')[:5]
         donor_serializer = DonorSerializer(top_donors, many=True)
 
         return Response({
