@@ -2,21 +2,26 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import (
     PostViewSet,
+    CompletedPostViewSet,
     get_post_countries_view,
     DonationIntentCreateView,
     stripe_webhook,
     PostDetailsAPIView,
+    SinglePostView
 )
 
 # Create a router and register the viewsets
 router = DefaultRouter()
 router.register('posts', PostViewSet, basename='post')
 
+
 urlpatterns = [
     # Other URL patterns for your project
     
     # Include the router URLs
     path('', include(router.urls)),
+    path('completed-posts/', CompletedPostViewSet.as_view({'get': 'list'}), name='completed-post-list'),
+    path('single-post/<int:pk>/', SinglePostView.as_view(), name='single-post'),
     path('post-countries/', get_post_countries_view, name='post-countries'),
     path('create-donation/<int:pk>/', DonationIntentCreateView.as_view(), name='create-donation'),
     path('webhook/', stripe_webhook, name='stripe_webhook'),

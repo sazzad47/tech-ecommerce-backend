@@ -24,7 +24,14 @@ class Post(models.Model):
         default_currency='USD',
         null= True
     )
-    total_tips = MoneyField(
+    total_company_tips = MoneyField(
+        decimal_places=2,
+        max_digits=20,
+        default=0,
+        default_currency='USD',
+        null= True
+    )
+    total_volunteer_tips = MoneyField(
         decimal_places=2,
         max_digits=20,
         default=0,
@@ -52,16 +59,16 @@ class Post(models.Model):
     occupation = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(max_length=255, null=True, blank=True)
-    identification_card = models.FileField(null=True, blank=True, upload_to='post_documents/')
-    certificate_from_city_council = models.FileField(null=True, blank=True, upload_to='post_documents/')
-    medical_report = models.FileField(null=True, blank=True, upload_to='post_documents/')
-    permission_letter = models.FileField(null=True, blank=True, upload_to='post_documents/')
-    test_results = models.FileField(null=True, blank=True, upload_to='post_documents/')
+    identification_card = models.CharField(max_length=10000, null=True, blank=True)
+    certificate_from_city_council = models.CharField(max_length=10000, null=True, blank=True)
+    medical_report = models.CharField(max_length=10000, null=True, blank=True)
+    permission_letter = models.CharField(max_length=10000, null=True, blank=True)
+    test_results = models.CharField(max_length=10000, null=True, blank=True)
     name_of_employment = models.CharField(max_length=255, null=True, blank=True)
-    photo = models.FileField(null=True, blank=True, upload_to='post_documents/')
-    other_documents = models.FileField(null=True, blank=True, upload_to='post_documents/')
+    photo = models.CharField(max_length=10000, null=True, blank=True)
+    other_documents = models.CharField(max_length=10000, null=True, blank=True)
     title = models.CharField(max_length=255, null=True, blank=True)
-    live_description = models.FileField(null=True, blank=True, upload_to='post_documents/')
+    live_description = models.CharField(max_length=10000, null=True, blank=True)
     written_description = models.TextField()
     time_limit = models.CharField(max_length=255, null=True, blank=True)
     fixed_time = models.DateTimeField(null=True, blank=True)
@@ -69,12 +76,19 @@ class Post(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='pending')
     suggested_donations = models.JSONField(blank=True, null=True)
-    suggested_tips = models.JSONField(blank=True, null=True)
+    suggested_company_tips = models.JSONField(blank=True, null=True)
+    suggested_volunteer_tips = models.JSONField(blank=True, null=True)
 
 class Tip(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    amount = MoneyField(
+    company_tips = MoneyField(
+        decimal_places=2,
+        default=0,
+        default_currency='USD',
+        max_digits=11,
+    )
+    volunteer_tips = MoneyField(
         decimal_places=2,
         default=0,
         default_currency='USD',
@@ -83,17 +97,23 @@ class Tip(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
+        # Convert the amount to USD
+        company_tips_usd = convert_money(self.company_tips, 'USD')
+        volunteer_tips_usd = convert_money(self.volunteer_tips, 'USD')
+        print(company_tips_usd.amount)
+        self.company_tips = company_tips_usd
+        self.volunteer_tips = volunteer_tips_usd
+
         super().save(*args, **kwargs)
 
-        # Convert the amount to USD
-        amount_usd = convert_money(Money(self.amount.amount, self.amount.currency), 'USD')
-        print(amount_usd.amount)
         # Update total_tips for the post
         post = self.post
-        previous_total_tips = post.total_tips or 0  # Get the previous total_tips or default to 0
-        post.total_tips = previous_total_tips.amount + amount_usd.amount
+        previous_total_company_tips = post.total_company_tips.amount if post.total_company_tips else 0
+        previous_total_volunteer_tips = post.total_volunteer_tips.amount if post.total_volunteer_tips else 0
+        post.total_company_tips = Money(previous_total_company_tips + company_tips_usd.amount, 'USD')
+        post.total_volunteer_tips = Money(previous_total_volunteer_tips + volunteer_tips_usd.amount, 'USD')
         post.save()
-        
+
     @property
     def first_name(self):
         return self.user.first_name
@@ -107,7 +127,7 @@ class Tip(models.Model):
         return self.user.avatar
 
 class Donation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     amount = MoneyField(
         decimal_places=2,
@@ -118,15 +138,17 @@ class Donation(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
+        # Convert the amount to USD
+        amount_usd = convert_money(self.amount, 'USD')
+        print(amount_usd.amount)
+        self.amount = amount_usd
+
         super().save(*args, **kwargs)
 
-        # Convert the amount to USD
-        amount_usd = convert_money(Money(self.amount.amount, self.amount.currency), 'USD')
-        print(amount_usd.amount)
         # Update total_donations for the post
         post = self.post
-        previous_total_donations = post.total_donations or 0  # Get the previous total_donations or default to 0
-        post.total_donations = previous_total_donations.amount + amount_usd.amount
+        previous_total_donations = post.total_donations.amount if post.total_donations else 0
+        post.total_donations = Money(previous_total_donations + amount_usd.amount, 'USD')
         post.save()
 
     @property
@@ -159,3 +181,4 @@ class Comment(models.Model):
     @property
     def avatar(self):
         return self.user.avatar
+    

@@ -9,6 +9,7 @@ from .utils import get_post_countries
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from rest_framework import generics
 import stripe
 import json
 from rest_framework.permissions import IsAuthenticated
@@ -18,6 +19,9 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djmoney.money import Money
+from django.db.models import F
+from rest_framework.generics import RetrieveAPIView
+from djmoney.contrib.exchange.models import convert_money
 
 class CustomPagination(PageNumberPagination):
     page_size = 6
@@ -25,7 +29,7 @@ class CustomPagination(PageNumberPagination):
     max_page_size = 100
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.filter(status='Approved').order_by('-created_at')
+    queryset = Post.objects.filter(status='Approved').filter(donation_needed__gt=F('total_donations')).order_by('-created_at')
     serializer_class = PostSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_fields = ['category', 'country']
@@ -52,6 +56,39 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return queryset.filter(status='Approved')
     
+class CompletedPostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.filter(status='Approved').filter(donation_needed=F('total_donations')).order_by('-created_at')
+    serializer_class = PostSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_fields = ['category', 'country']
+    search_fields = [
+        '^mode', '^category', '^first_name', '^last_name',
+        '^country', '^province', '^city', '^zip', '^address', '^name_of_employment', '^written_description'
+    ]
+    ordering_fields = ['created_at']  # Replace with your desired field for sorting
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = CustomPagination
+
+    def perform_create(self, serializer):
+        # Assign the logged-in user to the user field
+        serializer.save(user=self.request.user)
+
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        emergency = self.request.query_params.get('emergency')
+        if emergency == 'true':
+            queryset = queryset.filter(mode='emergency')
+        elif emergency == 'false':
+            queryset = queryset.filter(mode='normal')
+
+        return queryset.filter(status='Approved').filter(donation_needed=F('total_donations'))
+    
+class SinglePostView(RetrieveAPIView):
+    queryset = Post.objects.filter(status='Approved', donation_needed=F('total_donations'))
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
 
 def get_post_countries_view(request):
     post_countries = get_post_countries()
@@ -69,11 +106,12 @@ class DonationIntentCreateView(APIView):
         prod_id = self.kwargs["pk"]
         currency = request.data.get('currency')  
         donation_amount = request.data.get('donation_amount')  
-        tips_amount = request.data.get('tips_amount')  
+        company_tips_amount = request.data.get('company_tips_amount')  
+        volunteer_tips_amount = request.data.get('volunteer_tips_amount')  
         comment = request.data.get('comment')  
         is_hidden = request.data.get('is_hidden')  
         user_id = request.user.id         
-        amount = (int(donation_amount) + int(tips_amount)) * 100
+        amount = (int(donation_amount) + int(company_tips_amount) + int(volunteer_tips_amount)) * 100
 
         try:
             post = get_object_or_404(Post, id=prod_id)
@@ -94,7 +132,8 @@ class DonationIntentCreateView(APIView):
                 metadata={
                     'product_id': post.id,
                     'donation_amount': donation_amount,
-                    'tips_amount': tips_amount,
+                    'company_tips_amount': company_tips_amount,
+                    'volunteer_tips_amount': volunteer_tips_amount,
                     'currency': currency,
                     'comment': comment,
                     'user_id': user_id,
@@ -133,11 +172,17 @@ def stripe_webhook(request):
         session = event['data']['object']
         prod_id = session['metadata']['product_id']
         post = get_object_or_404(Post, id=prod_id)
+        user = post.user
 
         # Create a donation record
-        donation_amount = session['metadata']['donation_amount']
-        tips_amount = session['metadata']['tips_amount']
         currency = session['metadata']['currency']
+        donation_amount = session['metadata']['donation_amount']
+        donation_amount_money = Money(donation_amount, currency)
+        amount_usd = convert_money(donation_amount_money, 'USD')
+        company_tips_amount = session['metadata']['company_tips_amount']
+        volunteer_tips_amount = session['metadata']['volunteer_tips_amount']
+        volunteer_tips_money = Money(volunteer_tips_amount, currency)
+        volunteer_tips_usd = convert_money(volunteer_tips_money, 'USD')
         user_id = session['metadata']['user_id']
         is_hidden = session['metadata']['is_hidden']
 
@@ -146,6 +191,12 @@ def stripe_webhook(request):
         session_json = json.dumps(session, indent=4)
         print(session_json)
 
+        if volunteer_tips_amount:
+            user.tips += volunteer_tips_usd
+
+        user.funds += amount_usd
+        user.save()
+        
         Donation.objects.create(
             user_id=user_id,
             post=post,
@@ -155,12 +206,14 @@ def stripe_webhook(request):
         )
 
         # Add tips to the post
-        tips = session['metadata'].get('tips_amount')
-        if tips:
+        company_tips = session['metadata'].get('company_tips_amount')
+        volunteer_tips = session['metadata'].get('volunteer_tips_amount')
+        if company_tips or volunteer_tips:
             Tip.objects.create(
                 user_id=user_id,
                 post=post,
-                amount=Money(tips_amount, currency),
+                company_tips=Money(company_tips_amount, currency),
+                volunteer_tips=Money(volunteer_tips_amount, currency),
                 is_hidden=is_hidden
             )
 
@@ -200,3 +253,31 @@ def UserTransactionsView(request):
     transactions = Donation.objects.filter(user=user)
     serializer = DonorSerializer(transactions, many=True)
     return Response(serializer.data)
+
+
+# class VolunteerListCreateView(generics.ListCreateAPIView):
+#     queryset = Volunteer.objects.all()
+#     serializer_class = VolunteerSerializer
+
+# class VolunteerDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Volunteer.objects.all()
+#     serializer_class = VolunteerSerializer
+
+# class VolunteerQueryView(generics.ListAPIView):
+#     serializer_class = VolunteerSerializer
+
+#     def get_queryset(self):
+#         country = self.request.query_params.get('country', None)
+#         state = self.request.query_params.get('state', None)
+#         city = self.request.query_params.get('city', None)
+
+#         queryset = Volunteer.objects.all()
+
+#         if country:
+#             queryset = queryset.filter(country=country)
+#         if state:
+#             queryset = queryset.filter(state=state)
+#         if city:
+#             queryset = queryset.filter(city=city)
+
+#         return queryset

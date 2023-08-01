@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.models import User, BillingAddress
+from users.models import User, BillingAddress, Volunteer
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -98,7 +98,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'is_admin', 'is_staff', 'is_volunteer', 'funds']
 
 class UserChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
@@ -167,4 +167,30 @@ class BillingAddressSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'intro', 'place_of_birth', 'current_location', 'education', 'profession', 'expertise', 'biography', "avatar", 'social_links']
+        fields = ['first_name', 'last_name', 'intro', 'place_of_birth', 'current_location', 'education', 'profession', 'expertise', 'biography', "avatar", 'social_links', 'is_admin', 'is_staff', 'is_volunteer', 'funds']
+
+class VolunteerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Volunteer
+        fields = [
+            'first_name',
+            'last_name',
+            'fathers_name',
+            'mothers_name',
+            'country',
+            'province',
+            'city',
+            'zip',
+            'address',
+            'marital_status',
+            'specific_marital_status',
+            'date_of_birth',
+            'sex',
+            'specific_sex',
+            'blood_group',
+            'occupation',
+            'email',
+            'phone',
+            'identification_card',
+            'photo',
+        ]

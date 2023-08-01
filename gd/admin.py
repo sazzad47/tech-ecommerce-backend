@@ -19,7 +19,21 @@ class PostAdminForm(forms.ModelForm):
         ),
         required=False
     )
-    suggested_tips = forms.JSONField(
+    suggested_company_tips = forms.JSONField(
+        widget=JSONEditorWidget(
+            schema={
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'amount': {'type': 'number'}
+                    }
+                }
+            }
+        ),
+        required=False
+    )
+    suggested_volunteer_tips = forms.JSONField(
         widget=JSONEditorWidget(
             schema={
                 'type': 'array',
@@ -60,7 +74,7 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Tip)
 class TipAdmin(admin.ModelAdmin):
-    list_display = ['user', 'post', 'amount']
+    list_display = ['user', 'post', 'company_tips', 'volunteer_tips']
     list_filter = ['user', 'post']
     search_fields = ['user__email', 'post__application_for']
 
