@@ -176,7 +176,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 
 AUTH_USER_MODEL = 'users.User'
@@ -232,7 +231,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Set your Stripe API keys
-stripe.api_key = 'sk_test_51LrTfeJMUXLRq6IylpiimFXxuzAo7dn7ubQvTWvuTXY4Ukydi8oJEVjALdsytV3dF7afZ1tUREbcPaUQJBoSEwut00cFnGtmxC'
-STRIPE_WEBHOOK_SECRET = 'whsec_7c1e3d191e2169509229851d3e097ca74bf4246304e2d713b026e5c62ab5bffb'
+stripe.api_key = os.environ.get('STRIPE_API_KEY')
+STRIPE_WEBHOOK_SECRET_IT = os.environ.get('STRIPE_WEBHOOK_SECRET_IT')
+STRIPE_WEBHOOK_SECRET_CE = os.environ.get('STRIPE_WEBHOOK_SECRET_CE')
+STRIPE_WEBHOOK_SECRET_GD = os.environ.get('STRIPE_WEBHOOK_SECRET_GD')
 
-OPEN_EXCHANGE_RATES_APP_ID= '7e6f370ac665440dafb0c87273baabc1'
+OPEN_EXCHANGE_RATES_APP_ID= os.environ.get('OPEN_EXCHANGE_RATES_APP_ID')
