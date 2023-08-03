@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-b_*jg3e1x)ikum0_-7kfe^*t-qi1g3-lju_iz9#an#@2sdkn4%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '127.0.0.1']
 
 
 # Application definition
@@ -217,8 +217,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 PASSWORD_RESET_TIMEOUT=900          # 900 Sec = 15 Min
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    os.environ.get('BASE_URL'),
+    os.environ.get('CLIENT_BASE_URL'),
+    'http://localhost:3000',
+    'https://glittery-pie-e0bb6b.netlify.app',
+    'https://lucky-dragon-e33632.netlify.app'
+
 ]
 
 # Define the media settings
