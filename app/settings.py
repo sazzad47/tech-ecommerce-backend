@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+load_dotenv()
 import stripe
 import os
 
@@ -96,12 +98,13 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ecommerce',
-        'USER': 'postgres',
-        'PASSWORD': 'hadith',
-        'HOST': 'localhost',
-        'POST': '5432',
+        'ENGINE': 'django.db.backends.postgresql',
+        'URL': os.environ.get('POSTGRES_URL'),
+        'NAME': os.environ.get('PGDATABASE'),
+        'USER': os.environ.get('PGUSER'),
+        'PASSWORD': os.environ.get('PGPASSWORD'),
+        'HOST': os.environ.get('PGHOST'),
+        'PORT': os.environ.get('PGPORT')
     }
 }
 

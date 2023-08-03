@@ -167,7 +167,7 @@ class BillingAddressSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'intro', 'place_of_birth', 'current_location', 'education', 'profession', 'expertise', 'biography', "avatar", 'social_links', 'is_admin', 'is_staff', 'is_volunteer', 'funds']
+        fields = ['first_name', 'last_name', 'email', 'intro', 'place_of_birth', 'current_location', 'education', 'profession', 'expertise', 'biography', "avatar", 'social_links', 'is_admin', 'is_staff', 'is_volunteer', 'funds', 'pending_withdrawal_donations', 'pending_withdrawal_tips', 'tips']
 
 class VolunteerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -193,4 +193,5 @@ class VolunteerSerializer(serializers.ModelSerializer):
             'phone',
             'identification_card',
             'photo',
+            'status',
         ]

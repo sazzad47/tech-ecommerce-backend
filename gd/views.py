@@ -1,15 +1,15 @@
 from rest_framework import viewsets
-from .models import Post, Tip, Donation, Comment
-from .serializers import PostSerializer, TipSerializer, DonorSerializer, CommentSerializer
+from .models import Post, Tip, Donation, Comment, DonationsWithdrawalRequest, TipsWithdrawalRequest
+from .serializers import PostSerializer, PostListSerializer, DonationsWithdrawalRequestSerializer, PostItemSerializer, TipSerializer, DonorSerializer, CommentSerializer, TipsWithdrawalRequestSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
 from .utils import get_post_countries
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
-from rest_framework import generics
+from rest_framework import generics, permissions
 import stripe
 import json
 from rest_framework.permissions import IsAuthenticated
@@ -22,6 +22,7 @@ from djmoney.money import Money
 from django.db.models import F
 from rest_framework.generics import RetrieveAPIView
 from djmoney.contrib.exchange.models import convert_money
+
 
 class CustomPagination(PageNumberPagination):
     page_size = 6
@@ -248,12 +249,124 @@ class PostDetailsAPIView(APIView):
         })
 
 @api_view(['GET'])
-def UserTransactionsView(request):
+def UserDonationsView(request):
     user = request.user
     transactions = Donation.objects.filter(user=user)
     serializer = DonorSerializer(transactions, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+def UserTipsView(request):
+    user = request.user
+    tips = Tip.objects.filter(user=user)
+    serializer = TipSerializer(tips, many=True)
+    return Response(serializer.data)
+
+class PostListView(generics.ListAPIView):
+    serializer_class = PostListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Post.objects.filter(user=user)
+
+class PostDetailView(generics.RetrieveAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class PostUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_donations_withdrawal_request(request):
+    serializer = DonationsWithdrawalRequestSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        amount = serializer.validated_data.get('amount')
+        user = request.user
+
+        # Update user's pending_withdrawal_donations field
+        user.pending_withdrawal_donations += amount
+        user.save()
+
+        # Set the user field of the withdrawal request
+        serializer.validated_data['user'] = user
+
+        serializer.save()
+
+        return Response({'message': 'Withdrawal request created successfully'})
+    return Response(serializer.errors, status=400)
+
+# View for updating an existing withdrawal request
+@api_view(['PUT'])
+def update_donations_withdrawal_request(request, withdrawal_request_id):
+    withdrawal_request = get_object_or_404(DonationsWithdrawalRequest, pk=withdrawal_request_id)
+    serializer = DonationsWithdrawalRequestSerializer(instance=withdrawal_request, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Withdrawal request updated successfully'})
+    return Response(serializer.errors, status=400)
+
+# View for deleting an existing withdrawal request
+@api_view(['DELETE'])
+def delete_donations_withdrawal_request(request, withdrawal_request_id):
+    withdrawal_request = get_object_or_404(DonationsWithdrawalRequest, pk=withdrawal_request_id)
+    withdrawal_request.delete()
+    return Response({'message': 'Withdrawal request deleted successfully'})
+
+# View for getting all withdrawal requests
+@api_view(['GET'])
+def get_donations_withdrawal_requests(request):
+    withdrawal_requests = DonationsWithdrawalRequest.objects.all()
+    serializer = DonationsWithdrawalRequestSerializer(withdrawal_requests, many=True)
+    return Response({'withdrawal_requests': serializer.data})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_tips_withdrawal_request(request):
+    serializer = TipsWithdrawalRequestSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        amount = serializer.validated_data.get('amount')
+        user = request.user
+
+        # Update user's pending_withdrawal_tips field
+        user.pending_withdrawal_tips += amount
+        user.save()
+
+        # Set the user field of the withdrawal request
+        serializer.validated_data['user'] = user
+
+        serializer.save()
+
+        return Response({'message': 'Withdrawal request created successfully'})
+    return Response(serializer.errors, status=400)
+
+# View for updating an existing withdrawal request
+@api_view(['PUT'])
+def update_tips_withdrawal_request(request, withdrawal_request_id):
+    withdrawal_request = get_object_or_404(TipsWithdrawalRequest, pk=withdrawal_request_id)
+    serializer = TipsWithdrawalRequestSerializer(instance=withdrawal_request, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Withdrawal request updated successfully'})
+    return Response(serializer.errors, status=400)
+
+# View for deleting an existing withdrawal request
+@api_view(['DELETE'])
+def delete_tips_withdrawal_request(request, withdrawal_request_id):
+    withdrawal_request = get_object_or_404(TipsWithdrawalRequest, pk=withdrawal_request_id)
+    withdrawal_request.delete()
+    return Response({'message': 'Withdrawal request deleted successfully'})
+
+# View for getting all withdrawal requests
+@api_view(['GET'])
+def get_tips_withdrawal_requests(request):
+    withdrawal_requests = TipsWithdrawalRequest.objects.all()
+    serializer = TipsWithdrawalRequestSerializer(withdrawal_requests, many=True)
+    return Response({'withdrawal_requests': serializer.data})
 
 # class VolunteerListCreateView(generics.ListCreateAPIView):
 #     queryset = Volunteer.objects.all()

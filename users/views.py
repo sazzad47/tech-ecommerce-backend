@@ -7,7 +7,7 @@ from users.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
-from users.models import User
+from users.models import User, Volunteer
 from rest_framework import generics
 import pyotp
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -279,6 +279,17 @@ class VolunteerView(APIView):
         volunteer_information.delete()
         return Response({"message": "Volunteer information deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
+class AllVolunteerView(APIView):
+    def get(self, request):
+        try:
+            volunteers = Volunteer.objects.filter(status='Approved')
+            serializer = VolunteerSerializer(volunteers, many=True)
+            return Response(serializer.data)
+        except Volunteer.DoesNotExist:
+            return Response({'message': 'No volunteers found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 class UserProfileView(generics.UpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]

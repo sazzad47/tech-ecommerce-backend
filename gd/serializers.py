@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Tip, Donation, Comment
+from .models import Post, Tip, Donation, Comment, DonationsWithdrawalRequest, TipsWithdrawalRequest
 
 class TipSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
@@ -9,11 +9,11 @@ class TipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tip
-        fields = ('user', 'first_name', 'last_name', 'avatar', 'amount', 'is_hidden')
+        fields = ('id', 'created_at', 'user', 'post', 'first_name', 'last_name', 'avatar', 'company_tips', 'volunteer_tips', 'is_hidden')
     
     def get_avatar(self, obj):
         if obj.user.avatar:
-            return obj.user.avatar.url
+            return obj.user.avatar
         return None
 
 class DonorSerializer(serializers.ModelSerializer):
@@ -24,11 +24,11 @@ class DonorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Donation
-        fields = ('user', 'first_name', 'last_name', 'avatar', 'amount', 'is_hidden')
+        fields = ('id', 'created_at', 'user', 'post', 'first_name', 'last_name', 'avatar', 'amount', 'is_hidden')
     
     def get_avatar(self, obj):
         if obj.user.avatar:
-            return obj.user.avatar.url
+            return obj.user.avatar
         return None
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -39,11 +39,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('user', 'first_name', 'last_name', 'avatar', 'content', 'created_at', 'is_hidden')
+        fields = ('id', 'created_at', 'user', 'post', 'first_name', 'last_name', 'avatar', 'content', 'is_hidden')
 
     def get_avatar(self, obj):
         if obj.user.avatar:
-            return obj.user.avatar.url
+            return obj.user.avatar
         return None
 
     
@@ -57,5 +57,26 @@ class PostSerializer(serializers.ModelSerializer):
         # Assign the logged-in user to the user field
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+    
+class PostListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'created_at', 'status', 'donation_needed', 'total_donations']
 
+class PostItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        exclude = ('user', )
+
+class DonationsWithdrawalRequestSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    class Meta:
+        model = DonationsWithdrawalRequest
+        fields = ['id', 'user', 'amount', 'account_number', 'bank_name', 'routing_number', 'other_information', 'status']
+
+class TipsWithdrawalRequestSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    class Meta:
+        model = TipsWithdrawalRequest
+        fields = ['id', 'user', 'amount', 'account_number', 'bank_name', 'routing_number', 'other_information', 'status']
 

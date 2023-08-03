@@ -65,9 +65,10 @@ class Post(models.Model):
     permission_letter = models.CharField(max_length=10000, null=True, blank=True)
     test_results = models.CharField(max_length=10000, null=True, blank=True)
     name_of_employment = models.CharField(max_length=255, null=True, blank=True)
-    photo = models.CharField(max_length=10000, null=True, blank=True)
+    credential_photos =  models.JSONField(blank=True, null=True)
     other_documents = models.CharField(max_length=10000, null=True, blank=True)
     title = models.CharField(max_length=255, null=True, blank=True)
+    photo = models.CharField(max_length=10000, null=True, blank=True)
     live_description = models.CharField(max_length=10000, null=True, blank=True)
     written_description = models.TextField()
     time_limit = models.CharField(max_length=255, null=True, blank=True)
@@ -95,6 +96,7 @@ class Tip(models.Model):
         max_digits=11,
     )
     is_hidden = models.BooleanField(default=False)
+    created_at = models.DateField(default=timezone.now)
 
     def save(self, *args, **kwargs):
         # Convert the amount to USD
@@ -136,6 +138,7 @@ class Donation(models.Model):
         max_digits=11,
     )
     is_hidden = models.BooleanField(default=False)
+    created_at = models.DateField(default=timezone.now)
 
     def save(self, *args, **kwargs):
         # Convert the amount to USD
@@ -169,6 +172,7 @@ class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_hidden = models.BooleanField(default=False)
+   
 
     @property
     def first_name(self):
@@ -181,4 +185,54 @@ class Comment(models.Model):
     @property
     def avatar(self):
         return self.user.avatar
+    
+class DonationsWithdrawalRequest(models.Model):
+    # Choices for the status field
+    PENDING = 'Pending'
+    APPROVED = 'Approved'
+    REJECTED = 'Rejected'
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    account_number = models.CharField(max_length=100, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, default="")
+    routing_number = models.CharField(max_length=100, blank=True, default="")
+    other_information = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
+
+    def __str__(self):
+        return f"Withdrawal Request #{self.pk}: {self.amount} {self.status}"
+    
+class TipsWithdrawalRequest(models.Model):
+    # Choices for the status field
+    PENDING = 'Pending'
+    APPROVED = 'Approved'
+    REJECTED = 'Rejected'
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    account_number = models.CharField(max_length=100, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, default="")
+    routing_number = models.CharField(max_length=100, blank=True, default="")
+    other_information = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
+
+    def __str__(self):
+        return f"Withdrawal Request #{self.pk}: {self.amount} {self.status}"
     
