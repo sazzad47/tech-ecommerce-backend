@@ -22,7 +22,7 @@ from djmoney.money import Money
 from django.db.models import F
 from rest_framework.generics import RetrieveAPIView
 from djmoney.contrib.exchange.models import convert_money
-
+from app.settings import BASE_CLIENT_URL
 
 class CustomPagination(PageNumberPagination):
     page_size = 6
@@ -141,8 +141,8 @@ class DonationIntentCreateView(APIView):
                     'is_hidden': is_hidden
                 },
                 mode='payment',
-                success_url='http://localhost:3000/it/orders/payment' + '?success=true',
-                cancel_url=f"http://localhost:3000/it/profile/orders/{post.id}",
+                success_url=BASE_CLIENT_URL +'/gd/causes/donation-message?success=true',
+                cancel_url=BASE_CLIENT_URL + '/gd/causes/donate' + post.id,
             )
             
             return Response({'checkout_url': checkout_session.url})

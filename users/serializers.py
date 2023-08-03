@@ -5,6 +5,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from users.utils import Util
 import pyotp
+from app.settings import BASE_CLIENT_URL
 
 class generateKey:
     @staticmethod
@@ -123,7 +124,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             user = User.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
-            link = 'http://localhost:3000/reset-password/'+uid+'/'+token
+            link = BASE_CLIENT_URL +'/' + 'reset-password' + '/'+ uid+ '/'+ token
             body = 'Click the following link to reset your password: '+link
             data = {
                 'subject': 'Reset Your Password',

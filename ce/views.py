@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from django.http import HttpResponse
 from utils import Util
 from rest_framework.decorators import api_view
+from app.settings import BASE_CLIENT_URL
 
 
 class OrderCreateView(generics.CreateAPIView):
@@ -82,8 +83,8 @@ class PaymentIntentCreateView(APIView):
                     "product_id":product.id
                 },
                 mode='payment',
-                success_url='http://localhost:3000/ce/orders/payment' + '?success=true',
-                cancel_url=f"http://localhost:3000/ce/profile/orders/{product.id}",
+                success_url=BASE_CLIENT_URL +'/ce/orders/payment?success=true',
+                cancel_url=BASE_CLIENT_URL + '/ce/profile/orders/' + product.id,
             )
             return Response({'checkout_url': checkout_session.url})
         except Exception as e:
