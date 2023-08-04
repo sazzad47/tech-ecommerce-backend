@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from .serializers import OrderSerializer, CompanySerializer, SecuritySerializer, OrderListSerializer, OrderItemSerializer, TransactionSerializer
-from .models import Order, Transaction, Security, Company
+from .serializers import OrderSerializer, ProductSerializer, TemplateSerializer, DesignSerializer, FooterPageSerializer, PaymentOptionSerializer, SocialLinkSerializer, GlobalLocationSerializer, CompanySerializer, SecuritySerializer, OrderListSerializer, OrderItemSerializer, TransactionSerializer, ServiceSerializer
+from .models import Order, Design, Template, Transaction, Security, Company, Service, Product, GlobalLocation, SocialLink, PaymentOption, FooterPage
 from django.views.decorators.csrf import csrf_exempt
 import stripe
 from utils import Util
@@ -12,14 +12,57 @@ from utils import Util
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from app.settings import BASE_CLIENT_URL
+from rest_framework import status
+
+class DesignViewSet(viewsets.ModelViewSet):
+    queryset = Design.objects.all()
+    serializer_class = DesignSerializer
+
+class TemplateViewSet(viewsets.ModelViewSet):
+    queryset = Template.objects.all()
+    serializer_class = TemplateSerializer
 
 class SecurityViewSet(viewsets.ModelViewSet):
     queryset = Security.objects.all()
     serializer_class = SecuritySerializer
 
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
+
+class FooterPageViewSet(viewsets.ModelViewSet):
+    queryset = FooterPage.objects.all()
+    serializer_class = FooterPageSerializer
+
+class GlobalLocationViewSet(viewsets.ModelViewSet):
+    queryset = GlobalLocation.objects.all()
+    serializer_class = GlobalLocationSerializer
+    
+class SocialLinkViewSet(viewsets.ModelViewSet):
+    queryset = SocialLink.objects.all()
+    serializer_class = SocialLinkSerializer
+
+class PaymentOptionViewSet(viewsets.ModelViewSet):
+    queryset = PaymentOption.objects.all()
+    serializer_class = PaymentOptionSerializer
+
+class ServiceViewSet(viewsets.ModelViewSet):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+
+class GetOrdersByStatusView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        status = self.kwargs.get('status')
+        if status is not None and status.lower() != 'any':
+            return Order.objects.filter(status__iexact=status)
+        else:
+            return Order.objects.all()
 
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
@@ -58,7 +101,7 @@ class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class OrderUpdateView(generics.RetrieveUpdateAPIView):
+class OrderUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -174,3 +217,22 @@ def UserTransactionsView(request):
     transactions = Transaction.objects.filter(user=user)
     serializer = TransactionSerializer(transactions, many=True)
     return Response(serializer.data)
+
+@api_view(['GET'])
+def AllTransactionsView(request):
+    transactions = Transaction.objects.all()
+    serializer = TransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
+
+@api_view(['DELETE'])
+def DeleteTransactionView(request, transaction_id):
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+        return Response({'message': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        transaction.delete()
+        return Response({'message': 'Transaction deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)
