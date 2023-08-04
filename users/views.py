@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from users.serializers import SendPasswordResetEmailSerializer, UserChangePasswordSerializer, UserLoginSerializer, UserPasswordResetSerializer, UserProfileSerializer, UserRegistrationSerializer, UserRegistrationVerifySerializer, BillingAddressSerializer, UserProfileSerializer, VolunteerSerializer
+from users.serializers import SendPasswordResetEmailSerializer, SendAdminPasswordResetEmailSerializer, UserChangePasswordSerializer, UserLoginSerializer, UserPasswordResetSerializer, UserProfileSerializer, UserRegistrationSerializer, UserRegistrationVerifySerializer, BillingAddressSerializer, UserProfileSerializer, VolunteerSerializer
 from django.contrib.auth import authenticate
 from users.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -146,6 +146,13 @@ def send_verification_code(email, code):
         'to_email': email
     }
     Util.send_email(data)
+
+class SendAdminPasswordResetEmailView(APIView):
+  renderer_classes = [UserRenderer]
+  def post(self, request, format=None):
+    serializer = SendAdminPasswordResetEmailSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    return Response({'msg':'Password Reset link send. Please check your Email'}, status=status.HTTP_200_OK)
 
 class UserProfileView(APIView):
   renderer_classes = [UserRenderer]

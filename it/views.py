@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from .serializers import OrderSerializer, OrderListSerializer, OrderItemSerializer, TransactionSerializer
-from .models import Order, Transaction
+from .serializers import OrderSerializer, CompanySerializer, SecuritySerializer, OrderListSerializer, OrderItemSerializer, TransactionSerializer
+from .models import Order, Transaction, Security, Company
 from django.views.decorators.csrf import csrf_exempt
 import stripe
 from utils import Util
@@ -10,8 +10,16 @@ from rest_framework.views import APIView
 from django.http import HttpResponse
 from utils import Util
 from rest_framework.decorators import api_view
+from rest_framework import viewsets
 from app.settings import BASE_CLIENT_URL
 
+class SecurityViewSet(viewsets.ModelViewSet):
+    queryset = Security.objects.all()
+    serializer_class = SecuritySerializer
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
 
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()

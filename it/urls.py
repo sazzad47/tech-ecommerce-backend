@@ -1,5 +1,10 @@
-from django.urls import path
-from .views import OrderCreateView, OrderUpdateView, OrderDetailView, OrderListView, PaymentIntentCreateView, stripe_webhook, UserTransactionsView 
+from django.urls import path, include
+from .views import CompanyViewSet, SecurityViewSet, OrderCreateView, OrderUpdateView, OrderDetailView, OrderListView, PaymentIntentCreateView, stripe_webhook, UserTransactionsView 
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'security', SecurityViewSet)
+router.register(r'company', CompanyViewSet)
 
 urlpatterns = [
     path('orders/create/', OrderCreateView.as_view(), name='order-create'),
@@ -9,4 +14,5 @@ urlpatterns = [
     path('create-payment/<int:pk>/', PaymentIntentCreateView.as_view(), name='create-payment'),
     path('webhook/', stripe_webhook, name='stripe_webhook'),
     path('transactions/', UserTransactionsView, name='user_transactions'),
+    path('', include(router.urls)),
 ]

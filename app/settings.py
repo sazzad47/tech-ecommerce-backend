@@ -231,6 +231,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 BASE_URL = os.environ.get('BASE_URL')
 BASE_CLIENT_URL = os.environ.get('CLIENT_BASE_URL')
+BASE_ADMIN_URL = os.environ.get('BASE_ADMIN_URL')
 # Set your Stripe API keys
 stripe.api_key = os.environ.get('STRIPE_API_KEY')
 STRIPE_WEBHOOK_SECRET_IT = os.environ.get('STRIPE_WEBHOOK_SECRET_IT')

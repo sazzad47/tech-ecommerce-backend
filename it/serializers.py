@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Order
-from .models import Transaction
+from .models import Transaction, Security, Company
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,5 +28,12 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = '__all__'
 
-        
+class SecuritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Security
+        fields = '__all__'
 
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = '__all__'

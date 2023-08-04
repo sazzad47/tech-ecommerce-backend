@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
 from django.conf import settings
-from .models import Order
+from .models import Order, Security, Company
 from utils import Util
 from .models import Transaction
 from django.contrib.postgres import fields
@@ -96,4 +96,6 @@ class TransactionAdmin(admin.ModelAdmin):
 
     get_order.short_description = 'Order'
 
+admin.site.register(Security)
+admin.site.register(Company)
 admin.site.unregister(Group)

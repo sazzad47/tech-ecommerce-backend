@@ -6,6 +6,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from users.utils import Util
 import pyotp
 from app.settings import BASE_CLIENT_URL
+from app.settings import BASE_ADMIN_URL
 
 class generateKey:
     @staticmethod
@@ -135,6 +136,27 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             return attrs
         else:
             raise serializers.ValidationError('You are not a registered user')
+        
+class SendAdminPasswordResetEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        user = User.objects.get(email=email)
+        if user is not None and (user.is_admin or user.is_staff):
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            token = PasswordResetTokenGenerator().make_token(user)
+            link = BASE_ADMIN_URL +'/' + 'reset-password' + '/'+ uid+ '/'+ token
+            body = 'Click the following link to reset your password: '+link
+            data = {
+                'subject': 'Reset Your Password',
+                'body': body,
+                'to_email': user.email
+            }
+            Util.send_email(data)
+            return attrs
+        else:
+            raise serializers.ValidationError('Invalid Credentials')
 
 class UserPasswordResetSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)

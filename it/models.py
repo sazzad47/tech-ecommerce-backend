@@ -66,3 +66,23 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction #{self.pk} - User: {self.user.email}"
 
+
+class Security(models.Model):
+    title = models.CharField(max_length=1000)
+    short_description = models.TextField()
+    keywords = models.TextField()
+    content = models.TextField()
+
+    def __str__(self):
+        return self.title
+    
+class Company(models.Model):
+    photo = models.CharField(max_length=10000, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+    address = models.TextField()
+
+    def __str__(self):
+        return self.name
