@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
 from django.conf import settings
-from .models import Order
+from .models import Order, Security
 from utils import Util
 from .models import Transaction
 from django_json_widget.widgets import JSONEditorWidget
@@ -94,3 +94,4 @@ class TransactionAdmin(admin.ModelAdmin):
 
     get_order.short_description = 'Order'
 
+admin.site.register(Security)

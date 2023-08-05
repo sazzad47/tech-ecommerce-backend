@@ -236,3 +236,47 @@ class TipsWithdrawalRequest(models.Model):
     def __str__(self):
         return f"Withdrawal Request #{self.pk}: {self.amount} {self.status}"
     
+
+class Company(models.Model):
+    photo = models.CharField(max_length=10000, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+    address = models.TextField()
+
+    def __str__(self):
+        return self.name
+    
+class GlobalLocation(models.Model):
+    country = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+
+    def __str__(self):
+        return self.country
+    
+class SocialLink(models.Model):
+    icon = models.URLField(null=True, blank=True)
+    link = models.URLField()
+
+    def __str__(self):
+        return self.link
+    
+class PaymentOption(models.Model):
+    icon = models.URLField(null=True, blank=True)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+    
+class FooterPage(models.Model):
+    category = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
+    short_description = models.TextField()
+    keywords = models.TextField()
+    content = models.TextField()
+
+    def __str__(self):
+        return self.title

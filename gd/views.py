@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import Post, Tip, Donation, Comment, DonationsWithdrawalRequest, TipsWithdrawalRequest
-from .serializers import PostSerializer, PostListSerializer, DonationsWithdrawalRequestSerializer, PostItemSerializer, TipSerializer, DonorSerializer, CommentSerializer, TipsWithdrawalRequestSerializer
+from .models import Post, Tip, Donation, Comment, DonationsWithdrawalRequest, TipsWithdrawalRequest, Company, GlobalLocation, SocialLink, PaymentOption, FooterPage
+from .serializers import PostSerializer, PostListSerializer, DonationsWithdrawalRequestSerializer, PostItemSerializer, TipSerializer, DonorSerializer, CommentSerializer, TipsWithdrawalRequestSerializer, FooterPageSerializer, PaymentOptionSerializer, SocialLinkSerializer, GlobalLocationSerializer, CompanySerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -23,6 +23,38 @@ from django.db.models import F
 from rest_framework.generics import RetrieveAPIView
 from djmoney.contrib.exchange.models import convert_money
 from app.settings import BASE_CLIENT_URL
+from rest_framework import status
+
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+
+class FooterPageViewSet(viewsets.ModelViewSet):
+    queryset = FooterPage.objects.all()
+    serializer_class = FooterPageSerializer
+
+class GlobalLocationViewSet(viewsets.ModelViewSet):
+    queryset = GlobalLocation.objects.all()
+    serializer_class = GlobalLocationSerializer
+    
+class SocialLinkViewSet(viewsets.ModelViewSet):
+    queryset = SocialLink.objects.all()
+    serializer_class = SocialLinkSerializer
+
+class PaymentOptionViewSet(viewsets.ModelViewSet):
+    queryset = PaymentOption.objects.all()
+    serializer_class = PaymentOptionSerializer
+
+class GetPostsByStatusView(generics.ListAPIView):
+    serializer_class = PostSerializer
+
+    def get_queryset(self):
+        status = self.kwargs.get('status')
+        if status is not None and status.lower() != 'any':
+            return Post.objects.filter(status__iexact=status)
+        else:
+            return Post.objects.all()
 
 class CustomPagination(PageNumberPagination):
     page_size = 6
@@ -368,29 +400,41 @@ def get_tips_withdrawal_requests(request):
     serializer = TipsWithdrawalRequestSerializer(withdrawal_requests, many=True)
     return Response({'withdrawal_requests': serializer.data})
 
-# class VolunteerListCreateView(generics.ListCreateAPIView):
-#     queryset = Volunteer.objects.all()
-#     serializer_class = VolunteerSerializer
+@api_view(['GET'])
+def AllDonationsView(request):
+    donations = Donation.objects.all()
+    serializer = DonorSerializer(donations, many=True)
+    return Response(serializer.data)
 
-# class VolunteerDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Volunteer.objects.all()
-#     serializer_class = VolunteerSerializer
+@api_view(['DELETE'])
+def DeleteDonationView(request, donation_id):
+    try:
+        donation = Donation.objects.get(id=donation_id)
+    except Donation.DoesNotExist:
+        return Response({'message': 'Donation not found'}, status=status.HTTP_404_NOT_FOUND)
 
-# class VolunteerQueryView(generics.ListAPIView):
-#     serializer_class = VolunteerSerializer
+    if request.method == 'DELETE':
+        donation.delete()
+        return Response({'message': 'Donation deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-#     def get_queryset(self):
-#         country = self.request.query_params.get('country', None)
-#         state = self.request.query_params.get('state', None)
-#         city = self.request.query_params.get('city', None)
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)
 
-#         queryset = Volunteer.objects.all()
+@api_view(['GET'])
+def AllTipsView(request):
+    tips = Tip.objects.all()
+    serializer = TipSerializer(tips, many=True)
+    return Response(serializer.data)
 
-#         if country:
-#             queryset = queryset.filter(country=country)
-#         if state:
-#             queryset = queryset.filter(state=state)
-#         if city:
-#             queryset = queryset.filter(city=city)
+@api_view(['DELETE'])
+def DeleteTipView(request, tip_id):
+    try:
+        tip = Tip.objects.get(id=tip_id)
+    except Tip.DoesNotExist:
+        return Response({'message': 'Tip not found'}, status=status.HTTP_404_NOT_FOUND)
 
-#         return queryset
+    if request.method == 'DELETE':
+        tip.delete()
+        return Response({'message': 'Tip deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)
+
