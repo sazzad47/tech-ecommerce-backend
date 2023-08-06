@@ -438,3 +438,92 @@ def DeleteTipView(request, tip_id):
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)
 
+class DonationsWithdrawalRequestViewSet(viewsets.ModelViewSet):
+    queryset = DonationsWithdrawalRequest.objects.all()
+    serializer_class = DonationsWithdrawalRequestSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        new_status = serializer.validated_data.get('status', instance.status)
+        amount = serializer.validated_data.get('amount', instance.amount)
+
+        # Check if the new status is "Approved"
+        if new_status == "Approved":
+            # Update the status of the donation withdrawal request
+            instance.status = new_status
+            instance.save()
+            
+            amount_money = Money(amount, "USD")
+            # Deduct the amount from the related User's funds
+            user = instance.user
+            if user.funds >= amount_money:
+                user.funds -= amount_money
+                user.save()
+            else:
+                return Response({"error": "Insufficient funds."}, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            # Update the status of the donation withdrawal request
+            instance.status = new_status
+            instance.save()
+
+        return Response(serializer.data)
+    
+class GetDonationsWithdrawalRequestByStatusView(generics.ListAPIView):
+    serializer_class = DonationsWithdrawalRequestSerializer
+
+    def get_queryset(self):
+        status = self.kwargs.get('status')
+        if status is not None and status.lower() != 'any':
+            return DonationsWithdrawalRequest.objects.filter(status__iexact=status)
+        else:
+            return DonationsWithdrawalRequest.objects.all()
+        
+class TipsWithdrawalRequestViewSet(viewsets.ModelViewSet):
+    queryset = TipsWithdrawalRequest.objects.all()
+    serializer_class = TipsWithdrawalRequestSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        new_status = serializer.validated_data.get('status', instance.status)
+        amount = serializer.validated_data.get('amount', instance.amount)
+
+        # Check if the new status is "Approved"
+        if new_status == "Approved":
+            # Update the status of the Tip withdrawal request
+            instance.status = new_status
+            instance.save()
+            
+            amount_money = Money(amount, "USD")
+            # Deduct the amount from the related User's funds
+            user = instance.user
+            if user.tips >= amount_money:
+                user.tips -= amount_money
+                user.save()
+            else:
+                return Response({"error": "Insufficient funds."}, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            # Update the status of the Tip withdrawal request
+            instance.status = new_status
+            instance.save()
+
+        return Response(serializer.data)
+    
+class GetTipsWithdrawalRequestByStatusView(generics.ListAPIView):
+    serializer_class = TipsWithdrawalRequestSerializer
+
+    def get_queryset(self):
+        status = self.kwargs.get('status')
+        if status is not None and status.lower() != 'any':
+            return TipsWithdrawalRequest.objects.filter(status__iexact=status)
+        else:
+            return TipsWithdrawalRequest.objects.all()

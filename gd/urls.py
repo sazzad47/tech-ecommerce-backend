@@ -26,6 +26,10 @@ from .views import (
     DeleteDonationView,
     AllTipsView,
     DeleteTipView,
+    GetDonationsWithdrawalRequestByStatusView,
+    DonationsWithdrawalRequestViewSet,
+    TipsWithdrawalRequestViewSet,
+    GetTipsWithdrawalRequestByStatusView,
     CompanyViewSet, FooterPageViewSet, SocialLinkViewSet, GlobalLocationViewSet, PaymentOptionViewSet
 )
 
@@ -37,6 +41,8 @@ router.register(r'global-location', GlobalLocationViewSet)
 router.register(r'social-link', SocialLinkViewSet)
 router.register(r'payment-option', PaymentOptionViewSet)
 router.register(r'footer-page', FooterPageViewSet)
+router.register(r'admin-donationsWithdrawalRequests', DonationsWithdrawalRequestViewSet)
+router.register(r'admin-tipsWithdrawalRequests', TipsWithdrawalRequestViewSet)
 
 
 
@@ -65,6 +71,8 @@ urlpatterns = [
     path('donations-withdrawal/update/<int:withdrawal_request_id>/', update_donations_withdrawal_request, name='update_donations_withdrawal_request'),
     path('donations-withdrawal/delete/<int:withdrawal_request_id>/', delete_donations_withdrawal_request, name='delete_donations_withdrawal_request'),
     path('donations-withdrawal/requests/', get_donations_withdrawal_requests, name='get_donations_withdrawal_requests'),
+    path('donations-withdrawal/<str:status>/', GetDonationsWithdrawalRequestByStatusView.as_view(), name='admin_donations-withdrawal-status'),
+    path('tips-withdrawal/<str:status>/', GetTipsWithdrawalRequestByStatusView.as_view(), name='admin_tips-withdrawal-status'),
     path('tips-withdrawal/create/', create_tips_withdrawal_request, name='create_tips_withdrawal_request'),
     path('tips-withdrawal/update/<int:withdrawal_request_id>/', update_tips_withdrawal_request, name='update_tips_withdrawal_request'),
     path('tips-withdrawal/delete/<int:withdrawal_request_id>/', delete_tips_withdrawal_request, name='delete_tips_withdrawal_request'),

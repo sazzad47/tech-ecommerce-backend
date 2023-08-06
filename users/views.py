@@ -12,6 +12,7 @@ from rest_framework import generics
 import pyotp
 from rest_framework.parsers import MultiPartParser, FormParser
 from users.utils import Util
+from rest_framework import viewsets
 
 # Generate Token Manually
 def get_tokens_for_user(user):
@@ -311,3 +312,48 @@ class UserProfileDetailView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+class VolunteerViewSet(viewsets.ModelViewSet):
+    queryset = Volunteer.objects.all()
+    serializer_class = VolunteerSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        new_status = serializer.validated_data.get('status', instance.status)
+
+        # Check if the new status is "Approved"
+        if new_status == "Approved":
+            # Update the status of the volunteer
+            instance.status = new_status
+            instance.save()
+
+            # Set the is_volunteer field of the related User to True
+            user = instance.user
+            user.is_volunteer = True
+            user.save()
+
+        else:
+            # Update the status of the volunteer
+            instance.status = new_status
+            instance.save()
+
+            # Set the is_volunteer field of the related User to False
+            user = instance.user
+            user.is_volunteer = False
+            user.save()
+
+        return Response(serializer.data)
+    
+class GeVolunteersByStatusView(generics.ListAPIView):
+    serializer_class = VolunteerSerializer
+
+    def get_queryset(self):
+        status = self.kwargs.get('status')
+        if status is not None and status.lower() != 'any':
+            return Volunteer.objects.filter(status__iexact=status)
+        else:
+            return Volunteer.objects.all()

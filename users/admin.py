@@ -20,7 +20,7 @@ class UserModelAdmin(BaseUserAdmin):
     list_filter = ('is_admin', 'is_staff', 'is_volunteer')
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'funds', 'tips')}),
         ('Permissions', {'fields': ('is_admin', 'is_staff', 'is_active', 'is_volunteer')}),
     )
     add_fieldsets = (

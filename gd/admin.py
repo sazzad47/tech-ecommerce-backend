@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Post, Tip, Donation, Comment
+from .models import Post, Tip, Donation, Comment, DonationsWithdrawalRequest, TipsWithdrawalRequest
 from django_json_widget.widgets import JSONEditorWidget
 from django import forms
 from django_admin_json_editor import JSONEditorWidget
@@ -89,4 +89,7 @@ class CommentInline(admin.ModelAdmin):
     list_display = ['user', 'post', 'content']
     list_filter = ['user', 'post']
     search_fields = ['user__email', 'post__application_for']
+
+admin.site.register(DonationsWithdrawalRequest)
+admin.site.register(TipsWithdrawalRequest)
 
