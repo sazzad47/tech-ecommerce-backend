@@ -224,6 +224,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://glittery-pie-e0bb6b.netlify.app',
     'https://lucky-dragon-e33632.netlify.app',
     'https://usukc.com',
+    'https://ssd.usukc.com'
 
 ]
 
